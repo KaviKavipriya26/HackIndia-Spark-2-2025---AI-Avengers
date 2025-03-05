@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart To-Do Task Scheduler</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .task-input {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        input, select, button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        input, select {
+            width: 100%;
+        }
+        button {
+            background: #ff4081;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #e6005c;
+        }
+        #taskList, #optimizedSchedule {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .task-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        #notification {
+            display: none;
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ffeb3b;
+            color: black;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="notification"></div>
+    <div class="container">
+        <h1>Smart To-Do Task Scheduler</h1>
+        <div class="task-input">
+            <input type="text" id="taskName" placeholder="Task Name">
+            <input type="datetime-local" id="deadline">
+            <input type="text" id="dependencies" placeholder="Dependencies (comma-separated)">
+            <select id="priority">
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+            <button id="addTaskBtn">Add Task</button>
+        </div>
+        <div id="taskList"></div>
+        <button id="optimizeBtn">Optimize Schedule</button>
+        <div id="optimizedSchedule"></div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let tasks = [];
+
+            function showNotification(message) {
+                const toast = document.getElementById("notification");
+                toast.innerText = message;
+                toast.style.display = "block";
+                setTimeout(() => { toast.style.display = "none"; }, 3000);
+            }
+
+            function addTask() {
+                const taskName = document.getElementById("taskName").value.trim();
+                const deadline = document.getElementById("deadline").value;
+                const dependencies = document.getElementById("dependencies").value.split(",").map(dep => dep.trim());
+                const priority = document.getElementById("priority").value;
+
+                if (!taskName || !deadline) {
+                    showNotification("⚠️ Please enter a task name and deadline!");
+                    return;
+                }
+                if (tasks.some(task => task.name.toLowerCase() === taskName.toLowerCase())) {
+                    showNotification("⚠️ Task name already exists!");
+                    return;
+                }
+
+                const task = {
+                    id: tasks.length + 1,
+                    name: taskName,
+                    deadline: new Date(deadline).getTime(),
+                    dependencies: dependencies.filter(dep => dep !== ""),
+                    priority: priority
+                };
+
+                tasks.push(task);
+                displayTasks();
+                showNotification("✅ Task added successfully!");
+                document.getElementById("taskName").value = "";
+                document.getElementById("deadline").value = "";
+                document.getElementById("dependencies").value = "";
+                document.getElementById("priority").value = "High";
+            }
+
+            function displayTasks() {
+                const taskList = document.getElementById("taskList");
+                taskList.innerHTML = "<h3>Task List:</h3>";
+                if (tasks.length === 0) {
+                    taskList.innerHTML += "<p>No tasks added yet.</p>";
+                    return;
+                }
+                tasks.forEach(task => {
+                    const taskItem = document.createElement("div");
+                    taskItem.classList.add("task-item");
+                    taskItem.innerHTML = `<p><strong>${task.name}</strong> - Priority: ${task.priority} - Due: ${new Date(task.deadline).toLocaleString()} 
+                    ${task.dependencies.length > 0 ? "(Depends on: " + task.dependencies.join(", ") + ")" : ""}</p>`;
+                    taskList.appendChild(taskItem);
+                });
+            }
+
+            function optimizeSchedule() {
+                if (tasks.length === 0) {
+                    showNotification("⚠️ No tasks to optimize!");
+                    return;
+                }
+                tasks.sort((a, b) => a.deadline - b.deadline || priorityValue(a.priority) - priorityValue(b.priority));
+                displayOptimizedSchedule();
+                showNotification("✅ Schedule optimized!");
+            }
+
+            function priorityValue(priority) {
+                return { "High": 1, "Medium": 2, "Low": 3 }[priority] || 4;
+            }
+
+            function displayOptimizedSchedule() {
+                const optimizedSchedule = document.getElementById("optimizedSchedule");
+                optimizedSchedule.innerHTML = "<h3>Optimized Task Order:</h3>";
+                tasks.forEach(task => {
+                    const taskItem = document.createElement("div");
+                    taskItem.classList.add("task-item");
+                    taskItem.innerHTML = `<p><strong>${task.name}</strong> - Due: ${new Date(task.deadline).toLocaleString()} - Priority: ${task.priority}</p>`;
+                    optimizedSchedule.appendChild(taskItem);
+                });
+            }
+
+            document.getElementById("addTaskBtn").addEventListener("click", addTask);
+            document.getElementById("optimizeBtn").addEventListener("click", optimizeSchedule);
+        });
+    </script>
+</body>
+</html>
